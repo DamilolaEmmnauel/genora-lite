@@ -547,17 +547,39 @@
                 const preview = document.getElementById('uploaded-preview');
                 const placeholder = document.getElementById('upload-placeholder');
 
-                preview.src = e.target.result;
-                preview.classList.remove('hidden');
-                placeholder.classList.add('hidden');
+                // Compress image to stay under Vercel's payload limit
+                const img = new Image();
+                img.onload = function() {
+                    const MAX_DIMENSION = 2048;
+                    let width = img.width;
+                    let height = img.height;
 
-                uploadedImageBase64 = e.target.result.split(',')[1];
+                    if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+                        const ratio = Math.min(MAX_DIMENSION / width, MAX_DIMENSION / height);
+                        width = Math.round(width * ratio);
+                        height = Math.round(height * ratio);
+                    }
 
-                conversationHistory = [];
-                lastEditedImageBase64 = '';
-                resetResults();
-                showError('');
-                updateEditButton();
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                    preview.src = compressedDataUrl;
+                    preview.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+
+                    uploadedImageBase64 = compressedDataUrl.split(',')[1];
+
+                    conversationHistory = [];
+                    lastEditedImageBase64 = '';
+                    resetResults();
+                    showError('');
+                    updateEditButton();
+                };
+                img.src = e.target.result;
             };
             reader.readAsDataURL(file);
         }
@@ -594,14 +616,18 @@
                     parts: []
                 };
 
-                if (conversationHistory.length === 0) {
-                    userMessage.parts.push({
-                        inline_data: {
-                            mime_type: 'image/jpeg',
-                            data: uploadedImageBase64
-                        }
-                    });
-                }
+                // Always send the latest image (original or last edited) to avoid
+                // conversation history bloat that exceeds Vercel's payload limit
+                const currentImageBase64 = lastEditedImageBase64 || uploadedImageBase64;
+                userMessage.parts.push({
+                    inline_data: {
+                        mime_type: 'image/jpeg',
+                        data: currentImageBase64
+                    }
+                });
+
+                // Reset history to only include this turn, preventing payload growth
+                conversationHistory = [];
 
                 const enhancedPrompt = `${prompt}
 
@@ -669,9 +695,19 @@ Remember: The person viewing this edited image knows the subjects personally. Th
                 });
 
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    console.error('API Error:', errorData);
-                    throw new Error(errorData.error?.message || `API request failed: ${response.status}`);
+                    let errorMessage = `API request failed: ${response.status}`;
+                    try {
+                        const errorData = await response.json();
+                        console.error('API Error:', errorData);
+                        errorMessage = errorData.error?.message || errorMessage;
+                    } catch {
+                        const text = await response.text().catch(() => '');
+                        console.error('API Error (non-JSON):', text);
+                        if (response.status === 413 || text.includes('Request Entity Too Large')) {
+                            errorMessage = 'Image is too large. Please try a smaller image.';
+                        }
+                    }
+                    throw new Error(errorMessage);
                 }
 
                 const data = await response.json();
@@ -685,29 +721,11 @@ Remember: The person viewing this edited image knows the subjects personally. Th
                         const imageData = imagePart.inline_data || imagePart.inlineData;
                         const generatedImageData = imageData.data;
                         const mimeType = imageData.mime_type || imageData.mimeType || 'image/png';
-                        const thoughtSignature = imagePart.thought_signature || imagePart.thoughtSignature;
-
                         const imageUrl = `data:${mimeType};base64,${generatedImageData}`;
                         lastEditedImageBase64 = generatedImageData;
 
                         displayResult(imageUrl);
                         editedImageData = imageUrl;
-
-                        const assistantPart = {
-                            inline_data: {
-                                mime_type: mimeType,
-                                data: generatedImageData
-                            }
-                        };
-
-                        if (thoughtSignature) {
-                            assistantPart.thought_signature = thoughtSignature;
-                        }
-
-                        conversationHistory.push({
-                            role: 'model',
-                            parts: [assistantPart]
-                        });
 
                         document.getElementById('prompt-input').value = '';
                         updateEditButton();
