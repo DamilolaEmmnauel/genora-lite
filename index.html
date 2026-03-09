@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Edit Pro - AI Photo Editor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f3ff 0%, #e0f2fe 50%, #fce7f3 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .header-title svg {
+            width: 2.5rem;
+            height: 2.5rem;
+            color: #7c3aed;
+        }
+
+        .header-title h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(to right, #7c3aed, #2563eb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-subtitle {
+            color: #6b7280;
+            font-size: 1.125rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header-powered {
+            color: #9ca3af;
+            font-size: 0.875rem;
+        }
+
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .card-header svg {
+            width: 1.25rem;
+            height: 1.25rem;
+            color: #7c3aed;
+        }
+
+        /* Upload Section */
+        .upload-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 0.5rem;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .upload-area:hover {
+            border-color: #7c3aed;
+        }
+
+        .upload-area svg {
+            width: 4rem;
+            height: 4rem;
+            color: #9ca3af;
+            margin: 0 auto 1rem;
+        }
+
+        .upload-area p {
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-area .file-types {
+            color: #9ca3af;
+            font-size: 0.875rem;
+        }
+
+        #uploaded-preview {
+            max-height: 16rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Edit Instructions */
+        textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-family: inherit;
+            resize: none;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #7c3aed;
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+        }
+
+        .examples-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .examples-box p {
+            font-size: 0.875rem;
+            color: #1e40af;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .examples-box ul {
+            list-style: none;
+            font-size: 0.875rem;
+            color: #1d4ed8;
+        }
+
+        .examples-box li {
+            margin-bottom: 0.25rem;
+        }
+
+        /* Buttons */
+        .button-group {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .btn-primary {
+            flex: 1;
+            background: linear-gradient(to right, #7c3aed, #2563eb);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: transform 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-primary svg {
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+
+        .btn-secondary {
+            padding: 0.75rem 1.5rem;
+            background: #e5e7eb;
+            color: #374151;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+
+        /* Error/Success Messages */
+        .alert {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+        }
+
+        .alert.hidden {
+            display: none;
+        }
+
+        /* Result Section */
+        .result-placeholder {
+            height: 24rem;
+            border: 2px dashed #d1d5db;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .result-placeholder svg {
+            width: 4rem;
+            height: 4rem;
+            color: #9ca3af;
+            margin-bottom: 1rem;
+        }
+
+        .result-placeholder p {
+            color: #6b7280;
+        }
+
+        #edited-preview {
+            width: 100%;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1rem;
+        }
+
+        .btn-download {
+            width: 100%;
+            background: #059669;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: background 0.2s;
+        }
+
+        .btn-download:hover {
+            background: #047857;
+        }
+
+        .btn-download svg {
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+
+        .continue-editing-box {
+            background: #faf5ff;
+            border: 1px solid #e9d5ff;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .continue-editing-box p {
+            font-size: 0.875rem;
+            color: #6b21a8;
+        }
+
+        /* Features Section */
+        .features {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .features h3 {
+            text-align: center;
+            font-size: 1.125rem;
+            margin-bottom: 1rem;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .feature-item {
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .feature-item .emoji {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-item h4 {
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .feature-item p {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-title">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <h1>Photo Edit Pro</h1>
+            </div>
+            <p class="header-subtitle">AI-powered photo editing that preserves your subjects' faces</p>
+            <p class="header-powered">Powered by Gemini 3 Pro Image (Nano Banana Pro) - Superior Face Preservation</p>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- Left Column -->
+            <div>
+                <!-- Upload Section -->
+                <div class="card">
+                    <div class="card-header">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                        </svg>
+                        Upload Photo
+                    </div>
+                    <div class="upload-area" onclick="document.getElementById('image-upload').click()">
+                        <input type="file" id="image-upload" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+                        <div id="upload-placeholder">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            <p>Click to upload your photo</p>
+                            <p class="file-types">JPG, PNG supported</p>
+                        </div>
+                        <img id="uploaded-preview" class="hidden" alt="Uploaded photo">
+                    </div>
+                </div>
+
+                <!-- Edit Instructions -->
+                <div class="card" style="margin-top: 1.5rem;">
+                    <div class="card-header">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                        </svg>
+                        Edit Instructions
+                    </div>
+                    <textarea id="prompt-input" rows="4" placeholder="E.g., 'Change the dress to a black evening gown' or 'Place this couple on a beach at sunset'"></textarea>
+                    
+                    <div class="examples-box">
+                        <p>💡 Example prompts:</p>
+                        <ul>
+                            <li>• "Change the outfit to a black suit"</li>
+                            <li>• "Replace the background with a beach sunset"</li>
+                            <li>• "Add professional studio lighting"</li>
+                            <li>• "Change the dress color to emerald green"</li>
+                        </ul>
+                        <p style="margin-top: 0.75rem; font-weight: 600; color: #1e40af;">🛡️ PRO Protection Active:</p>
+                        <ul style="color: #1e40af;">
+                            <li>• <strong>Faces:</strong> 100% identity preservation - never altered</li>
+                            <li>• <strong>Colors:</strong> Exact vibrancy, saturation & contrast maintained</li>
+                            <li>• <strong>Composition:</strong> Same framing, lighting & mood preserved</li>
+                            <li>• <strong>Quality:</strong> Original resolution & sharpness kept</li>
+                        </ul>
+                        
+                        <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #bfdbfe;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: #1e40af; font-weight: 600;">
+                                <span>📐 Output Resolution:</span>
+                                <select id="resolution-select" onchange="selectedResolution = this.value" style="padding: 0.25rem 0.5rem; border: 1px solid #bfdbfe; border-radius: 0.25rem; background: white; color: #1e40af; cursor: pointer;">
+                                    <option value="2K" selected>2K (2048px) - Recommended</option>
+                                    <option value="4K">4K (4096px) - Maximum Quality</option>
+                                </select>
+                            </label>
+                            <p style="font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem; margin-left: 0rem;">Higher resolution = better quality but slower generation</p>
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn-primary" id="edit-btn" onclick="handleEdit()" disabled>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                            </svg>
+                            <span id="edit-btn-text">Apply Edit</span>
+                        </button>
+                        <button class="btn-secondary" onclick="resetEditor()">Reset</button>
+                    </div>
+
+                    <div class="alert alert-error hidden" id="error-message"></div>
+                </div>
+            </div>
+
+            <!-- Right Column - Results -->
+            <div class="card">
+                <div class="card-header">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    Edited Result
+                </div>
+                
+                <div id="result-placeholder" class="result-placeholder">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <p>Your edited photo will appear here</p>
+                </div>
+
+                <div id="result-container" class="hidden">
+                    <img id="edited-preview" alt="Edited photo">
+                    <button class="btn-download" onclick="downloadImage()">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                        Download Edited Photo
+                    </button>
+                    <div class="continue-editing-box">
+                        <p>✨ Want to make more changes? Enter new instructions above and click "Apply Edit" again!</p>
+                        <p style="margin-top: 0.5rem; font-size: 0.8rem;">🛡️ Faces and quality are automatically protected with every edit.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Section -->
+        <div class="features">
+            <h3>🎯 Why Nano Banana Pro for Photographers?</h3>
+            <div class="features-grid">
+                <div class="feature-item">
+                    <div class="emoji">👤</div>
+                    <h4>100% Face Preservation</h4>
+                    <p>Facial features, skin texture, and identity stay perfectly identical</p>
+                </div>
+                <div class="feature-item">
+                    <div class="emoji">🎨</div>
+                    <h4>Color & Composition Lock</h4>
+                    <p>Vibrancy, contrast, lighting, and mood remain exactly the same</p>
+                </div>
+                <div class="feature-item">
+                    <div class="emoji">📐</div>
+                    <h4>2K/4K Resolution</h4>
+                    <p>Professional quality output up to 4096px for print and web</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let uploadedImageBase64 = '';
+        let conversationHistory = [];
+        let editedImageData = '';
+        let lastEditedImageBase64 = '';
+        let selectedResolution = '2K';
+
+        // Handle image upload
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('uploaded-preview');
+                const placeholder = document.getElementById('upload-placeholder');
+
+                preview.src = e.target.result;
+                preview.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+
+                uploadedImageBase64 = e.target.result.split(',')[1];
+
+                conversationHistory = [];
+                lastEditedImageBase64 = '';
+                resetResults();
+                showError('');
+                updateEditButton();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Update edit button state
+        function updateEditButton() {
+            const editBtn = document.getElementById('edit-btn');
+            const prompt = document.getElementById('prompt-input').value.trim();
+            editBtn.disabled = !uploadedImageBase64 || !prompt;
+        }
+
+        // Listen for prompt changes
+        document.getElementById('prompt-input').addEventListener('input', updateEditButton);
+
+        // Handle edit
+        async function handleEdit() {
+            if (!uploadedImageBase64) {
+                showError('Please upload an image first');
+                return;
+            }
+
+            const prompt = document.getElementById('prompt-input').value.trim();
+            if (!prompt) {
+                showError('Please enter editing instructions');
+                return;
+            }
+
+            setLoading(true);
+            showError('');
+
+            try {
+                const userMessage = {
+                    role: 'user',
+                    parts: []
+                };
+
+                if (conversationHistory.length === 0) {
+                    userMessage.parts.push({
+                        inline_data: {
+                            mime_type: 'image/jpeg',
+                            data: uploadedImageBase64
+                        }
+                    });
+                }
+
+                const enhancedPrompt = `${prompt}
+
+🚨 ABSOLUTE CRITICAL PRESERVATION RULES - ZERO TOLERANCE FOR VIOLATION:
+
+1. FACIAL IDENTITY PRESERVATION (MANDATORY):
+   - Keep the EXACT SAME face as the original image
+   - Preserve IDENTICAL facial features: eyes, nose, mouth, jawline, cheekbones
+   - Maintain the SAME facial expression and head position
+   - Keep ORIGINAL skin tone, texture, pores, and all skin details
+   - Do NOT alter, smooth, enhance, or modify the face in ANY way
+   - The face must be INSTANTLY RECOGNIZABLE as the same person
+   - Keep the SAME hairstyle, hair color, and hair texture
+
+2. COMPOSITION & COLOR PRESERVATION (MANDATORY):
+   - Maintain the EXACT SAME color vibrancy and saturation as the original
+   - Preserve the EXACT SAME contrast levels and tonal range
+   - Keep the SAME color grading and color temperature
+   - Maintain IDENTICAL brightness and exposure levels
+   - Preserve the SAME sharpness and clarity
+   - Keep the EXACT SAME composition, framing, and camera angle
+   - Do NOT make the image duller, less vibrant, or washed out
+   - Do NOT alter the overall mood and visual aesthetic
+
+3. IDENTITY MARKERS:
+   - This is the SAME PERSON/PEOPLE as in the original image
+   - Identity must remain 100% consistent and preserved
+   - No facial alterations, beautification, or modifications allowed
+
+4. IMAGE QUALITY MAINTENANCE:
+   - Keep the SAME resolution and sharpness as original
+   - Maintain IDENTICAL aspect ratio (width-to-height)
+   - Preserve fine details and image clarity
+   - Do NOT reduce quality or add compression
+
+5. LIGHTING PRESERVATION:
+   - Keep the SAME lighting direction and intensity on faces
+   - Preserve ORIGINAL shadows and highlights on facial features
+   - Maintain natural skin lighting
+   - Keep the SAME overall lighting mood and atmosphere
+
+6. EDIT SCOPE:
+   - ONLY change: ${prompt}
+   - EVERYTHING ELSE stays exactly as in the original
+   - Especially faces, colors, vibrancy, and composition - NEVER modify these
+
+Remember: The person viewing this edited image knows the subjects personally. They will immediately notice ANY facial changes, color shifts, or composition changes. Keep EVERYTHING perfectly identical except what was explicitly requested.`;
+
+                userMessage.parts.push({
+                    text: enhancedPrompt
+                });
+
+                conversationHistory.push(userMessage);
+
+                // Call serverless API proxy instead of Gemini directly
+                const response = await fetch('/api/edit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        contents: conversationHistory,
+                        resolution: selectedResolution
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('API Error:', errorData);
+                    throw new Error(errorData.error?.message || `API request failed: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('API Response:', data);
+
+                if (data.candidates && data.candidates[0]?.content?.parts) {
+                    const parts = data.candidates[0].content.parts;
+                    const imagePart = parts.find(part => part.inline_data || part.inlineData);
+
+                    if (imagePart) {
+                        const imageData = imagePart.inline_data || imagePart.inlineData;
+                        const generatedImageData = imageData.data;
+                        const mimeType = imageData.mime_type || imageData.mimeType || 'image/png';
+                        const thoughtSignature = imagePart.thought_signature || imagePart.thoughtSignature;
+
+                        const imageUrl = `data:${mimeType};base64,${generatedImageData}`;
+                        lastEditedImageBase64 = generatedImageData;
+
+                        displayResult(imageUrl);
+                        editedImageData = imageUrl;
+
+                        const assistantPart = {
+                            inline_data: {
+                                mime_type: mimeType,
+                                data: generatedImageData
+                            }
+                        };
+
+                        if (thoughtSignature) {
+                            assistantPart.thought_signature = thoughtSignature;
+                        }
+
+                        conversationHistory.push({
+                            role: 'model',
+                            parts: [assistantPart]
+                        });
+
+                        document.getElementById('prompt-input').value = '';
+                        updateEditButton();
+                    } else {
+                        const textPart = parts.find(part => part.text);
+                        if (textPart) {
+                            throw new Error('Model returned text instead of image. Try a more specific prompt.');
+                        }
+                        throw new Error('No image found in API response.');
+                    }
+                } else {
+                    throw new Error('Unexpected API response format.');
+                }
+            } catch (error) {
+                showError(error.message || 'Failed to edit image');
+                console.error('Error:', error);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function displayResult(imageUrl) {
+            document.getElementById('result-placeholder').classList.add('hidden');
+            document.getElementById('result-container').classList.remove('hidden');
+            document.getElementById('edited-preview').src = imageUrl;
+        }
+
+        function resetResults() {
+            document.getElementById('result-placeholder').classList.remove('hidden');
+            document.getElementById('result-container').classList.add('hidden');
+            editedImageData = '';
+        }
+
+        function downloadImage() {
+            if (!editedImageData) return;
+
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+
+                canvas.toBlob(function(blob) {
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `edited-photo-${Date.now()}.jpg`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    setTimeout(() => URL.revokeObjectURL(url), 100);
+                }, 'image/jpeg', 0.95);
+            };
+
+            img.src = editedImageData;
+        }
+
+        function resetEditor() {
+            uploadedImageBase64 = '';
+            conversationHistory = [];
+            editedImageData = '';
+            lastEditedImageBase64 = '';
+
+            document.getElementById('uploaded-preview').classList.add('hidden');
+            document.getElementById('upload-placeholder').classList.remove('hidden');
+            document.getElementById('prompt-input').value = '';
+
+            resetResults();
+            showError('');
+            updateEditButton();
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            if (message) {
+                errorDiv.textContent = message;
+                errorDiv.classList.remove('hidden');
+            } else {
+                errorDiv.classList.add('hidden');
+            }
+        }
+
+        function setLoading(isLoading) {
+            const editBtn = document.getElementById('edit-btn');
+
+            if (isLoading) {
+                editBtn.disabled = true;
+                editBtn.innerHTML = `
+                    <svg class="spinner" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    <span>Processing...</span>
+                `;
+            } else {
+                editBtn.disabled = false;
+                editBtn.innerHTML = `
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                    </svg>
+                    <span id="edit-btn-text">Apply Edit</span>
+                `;
+                updateEditButton();
+            }
+        }
+    </script>
+</body>
+</html>
